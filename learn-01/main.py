@@ -4,23 +4,29 @@ from anthropic import Anthropic
 load_dotenv()
 
 def main():
+
     client = Anthropic()
-    model = "claude-sonnet-4-0"
+    model = "claude-sonnet-4-5"
 
     print("created anthropic client")
 
     message = client.messages.create(
         model=model,
-        max_tokens=1000,
+        max_tokens=1,
         messages=[
             {
                 "role": "user",
-                "content": "What is quantum computing? Answer in one sentence"
+                "content": "What is latin for Ant? (A) Apoidea, (B) Rhopalocera, (C) Formicidae"
+            },
+            {
+                "role": "assistant",
+                "content": "The answer is ("
             }
         ]
     )
 
-    print(message)
+    print(message.content)
+    print(message.stop_reason)
 
 
 if __name__ == "__main__":
