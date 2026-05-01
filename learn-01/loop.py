@@ -4,10 +4,7 @@ from anthropic import Anthropic
 
 load_dotenv()
 
-def main():
-    client = Anthropic()
-    
-    tools = [
+tools = [
         {
             "name": "create_calendar_event",
             "description": "Create a calendar event with attendees and optional recurrence.",
@@ -36,60 +33,64 @@ def main():
         }
     ]
 
-    print("created anthropic client")
+def run_tool(name, tool_input):
+    if name == "create_calendar_event":
+        return {"status": "created", "title": tool_input["title"]}
+    
+    return {"error": f"Unknown tool {name}"}
 
-    response = client.messages.create(
+def create_message(client, messages):
+    return client.messages.create(
         model="claude-opus-4-6",
         tools=tools,
         tool_choice={"type": "auto", "disable_parallel_tool_use": True},
         max_tokens=1024,
-        messages=[
+        messages=messages,
+    )
+    
+
+def main():
+    client = Anthropic()
+    
+    print("created anthropic client")
+
+    messages = [
             {
                 "role": "user",
-                "content": "Schedule a 30-minute sync with alice@example.com and bob@example.com next Monday at 10am."
+                "content": "Schedule a weekly team standup every Monday at 9am for the next 4 weeks. Invite the whole team: alice@example.com, bob@example.com, carol@example.com."
             }
-        ],
-    )
+        ]
+
+    response = create_message(client, messages)
 
     print(response.content)
     print(response.stop_reason)
 
-    tool_uses = [tool_use for tool_use in response.content if tool_use.type == "tool_use"]
+    while response.stop_reason == "tool_use":
+        tool_use = next(tool_use_block for tool_use_block in response.content if tool_use_block.type == "tool_use")
+        tool_result = run_tool(tool_use.name, tool_use.input)
+        messages.append({
+            "role": "assistant",
+            "content": response.content
+        })
+        messages.append({
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "tool_use_id": tool_use.id,
+                    "content": json.dumps(tool_result)
+                }
+            ]
+        })
+        response = create_message(client, messages)
+
+    print(response.content)
+    print(response.stop_reason)
+
+
+
     
-
-    print(tool_uses)
-    
-
-    result = client.messages.create(
-        model="claude-opus-4-6",
-        tools=tools,
-        tool_choice={"type": "auto", "disable_parallel_tool_use": True},
-        max_tokens=1024,
-        messages=[
-            {
-                "role": "user",
-                "content": "Schedule a 30-minute sync with alice@example.com and bob@example.com next Monday at 10am."
-            },
-            {
-                "role": "assistant",
-                "content" : response.content
-            },
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "tool_result",
-                        "tool_use_id": tool_uses[0].id,
-                        "content": json.dumps({"event_id": "evt_123", "status": "created"})
-                    }
-                ]
-            }
-        ],
-    )
-
-    print(result.content)
-    print(result.stop_reason)
-
 
 if __name__ == "__main__":
     main()
