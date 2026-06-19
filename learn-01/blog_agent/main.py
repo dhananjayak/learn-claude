@@ -1,18 +1,25 @@
 
 from dotenv import load_dotenv
-from blog_agent.agent import Agent
+from research_agent import ResearchAgent
+from writer_agent import WriterAgent
+
 
 load_dotenv()  # Load environment variables from .env file
 
 def main():
-    agent = Agent(
-        system_prompt="You are a research assistant that helps gather information and insights on various topics. You can search the web, summarize articles, and provide detailed explanations based on your findings."
-    )
+    topic = "The impact of artificial intelligence on modern education"
 
-    prompt = "Please provide a summary of the latest advancements in AI research."
-    response = agent.invoke(prompt)
-    print("Agent response:")
-    print(response)
+    research_agent = ResearchAgent()
+    research_content = research_agent.perform_research(topic)
+
+    print("\nResearch Content:\n")
+    print(research_content)
+
+    writer_agent = WriterAgent()
+    blog_post = writer_agent.write_blog_post(research_content)
+
+    print("\nGenerated Blog Post:\n")
+    print(blog_post)
 
     
 
