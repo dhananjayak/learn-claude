@@ -5,5 +5,4 @@ class Unit:
         self.conversion_factor = conversion_factor
 
     def __str__(self):
-        return f"{self.name} ({self.symbol}) - Conversion Factor: {self.conversion_factor}"
-    
+        return f"{self.name} ({self.symbol}) - Conversion Factor: {self.conversion_factor}"    
